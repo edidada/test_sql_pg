@@ -1,0 +1,45 @@
+name: PostgreSQL Dept Tree Demo
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  pg-demo:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: demo
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify PostgreSQL version
+        run: |
+          PGPASSWORD=postgres psql -h localhost -U postgres -d demo -c "SELECT version();"
+
+      - name: Run dept tree SQL demo
+        run: |
+          PGPASSWORD=postgres psql -h localhost -U postgres -d demo \
+            -f sql/dept_tree.sql -v ON_ERROR_STOP=1
+          echo "=== SQL demo executed successfully ==="
+
+      - name: Sanity check
+        run: |
+          PGPASSWORD=postgres psql -h localhost -U postgres -d demo \
+            -c "SELECT COUNT(*) AS dept_rows FROM departments;"
