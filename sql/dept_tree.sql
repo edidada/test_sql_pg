@@ -33,7 +33,7 @@ WITH RECURSIVE dept_tree AS (
     FROM departments WHERE id = 2
     UNION ALL
     SELECT d.id, d.name, d.parent_id, dt.level + 1,
-           dt.path || ' > ' || d.name
+           CAST(dt.path || ' > ' || d.name AS VARCHAR(200))
     FROM departments d INNER JOIN dept_tree dt ON d.parent_id = dt.id
 )
 SELECT id, parent_id, level, path FROM dept_tree ORDER BY path;
@@ -55,7 +55,7 @@ WITH RECURSIVE dept_tree AS (
     FROM departments WHERE id = 1
     UNION ALL
     SELECT d.id, d.name, dt.level + 1,
-           dt.path || '/' || LPAD(d.id::text, 3, '0')
+           CAST(dt.path || '/' || LPAD(d.id::text, 3, '0') AS VARCHAR(200))
     FROM departments d INNER JOIN dept_tree dt ON d.parent_id = dt.id
 )
 SELECT level,
