@@ -51,6 +51,6 @@ jobs:
             -c "SELECT COUNT(*) AS dept_rows FROM departments;"
           echo "=== partition list (9 expected: 2 orders + 3 sales + 4 users) ==="
           PGPASSWORD=postgres psql -h localhost -U postgres -d demo -c \
-            "SELECT inhrelid::regclass AS part_name FROM pg_inherits ORDER BY part_name;"
+            "SELECT i.inhrelid::regclass AS part_name FROM pg_inherits i JOIN pg_class c ON c.oid = i.inhrelid WHERE c.relkind = 'r' ORDER BY part_name;"
           PGPASSWORD=postgres psql -h localhost -U postgres -d demo -t -A -c \
-            'DO $$ BEGIN ASSERT (SELECT count(*) FROM pg_inherits) = 9; END $$;'
+            "DO \$\$ BEGIN ASSERT (SELECT count(*) FROM pg_inherits i JOIN pg_class c ON c.oid = i.inhrelid WHERE c.relkind = 'r') = 9; END \$\$;"
