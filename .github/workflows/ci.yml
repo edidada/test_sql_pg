@@ -1,4 +1,4 @@
-name: PostgreSQL Dept Tree Demo
+name: PostgreSQL SQL Demos
 
 on:
   push:
@@ -37,9 +37,20 @@ jobs:
         run: |
           PGPASSWORD=postgres psql -h localhost -U postgres -d demo \
             -f sql/dept_tree.sql -v ON_ERROR_STOP=1
-          echo "=== SQL demo executed successfully ==="
+          echo "=== dept tree demo executed successfully ==="
+
+      - name: Run single-node sharding (partition) SQL demo
+        run: |
+          PGPASSWORD=postgres psql -h localhost -U postgres -d demo \
+            -f sql/partition_demo.sql -v ON_ERROR_STOP=1
+          echo "=== partition demo executed successfully ==="
 
       - name: Sanity check
         run: |
           PGPASSWORD=postgres psql -h localhost -U postgres -d demo \
             -c "SELECT COUNT(*) AS dept_rows FROM departments;"
+          echo "=== partition list (9 expected: 2 orders + 3 sales + 4 users) ==="
+          PGPASSWORD=postgres psql -h localhost -U postgres -d demo -c \
+            "SELECT inhrelid::regclass AS part_name FROM pg_inherits ORDER BY part_name;"
+          PGPASSWORD=postgres psql -h localhost -U postgres -d demo -t -A -c \
+            'DO $$ BEGIN ASSERT (SELECT count(*) FROM pg_inherits) = 9; END $$;'
