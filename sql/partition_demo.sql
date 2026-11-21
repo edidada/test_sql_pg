@@ -5,6 +5,9 @@
 -- 内嵌 DO ... ASSERT 断言，任何预期不符都会让 CI 失败
 -- =====================================================================
 
+-- 固定会话时区，避免 timestamptz 分区边界受运行环境时区影响
+SET timezone = 'UTC';
+
 -- ---------- 准备：清理历史对象，保证幂等 ----------
 DROP SCHEMA IF EXISTS tenant_a CASCADE;
 DROP SCHEMA IF EXISTS tenant_b CASCADE;
@@ -27,10 +30,10 @@ CREATE TABLE orders_2026_02 PARTITION OF orders
 CREATE TABLE orders_default PARTITION OF orders DEFAULT;
 
 INSERT INTO orders (created_at, amount) VALUES
-  ('2026-01-15 10:00:00+08',  99.50),
-  ('2026-01-31 23:00:00+08', 199.00),
-  ('2026-02-01 00:00:00+08', 128.00),
-  ('2027-05-01 00:00:00+08',  50.00);  -- 超出范围，落入 default
+  ('2026-01-15 10:00:00+00',  99.50),
+  ('2026-01-31 23:00:00+00', 199.00),
+  ('2026-02-15 10:00:00+00', 128.00),
+  ('2027-05-01 00:00:00+00',  50.00);  -- 超出范围，落入 default
 
 SELECT '① Range 分区自动路由：各分区行数' AS demo;
 SELECT tableoid::regclass AS part_name, count(*) AS rows
